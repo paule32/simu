@@ -1,10 +1,50 @@
+#!/usr/bin/clisp
 ;; ---------------------------------------------------
 ;; (c) 2019 Jens Kallup  -  non-profit
 ;; Alle Rechte vorbehalten!
 ;;
 ;; Nicht für kommerzielle Zwecke !!!
 ;; ----------------------------------------------------------------------------
+;; Rechenregeln:  geometrische Formeln
+;;
+(defun geoRechteck-Flaeche (h l) (* h l))               ; Rechteck Fläche:     Höhe h *     Länge l
+(defun geoRechteck-Umfang  (h l) (+ (* 2 h) (* 2 l)))   ; Rechteck Umfang: 2 * Höhe h + 2 * Länge l
+;;
+(defun geoQuadrat-Flaeche  (a)   (* a a))               ; Quadrat-Fläche: a^2
+(defun geoQuadrat-Umfang   (a)   (* 4 a))               ; Quadrat-Umfang: 4a
+;;
+(defun geoDreiech-Flaeche  (b h)   (* 0.5 (* b h)))     ; Dreieck-Fläche: A = 1/2 * bh
+(defun geoDreieck-Umfang   (a b c) (+ a b c))           ; Dreieck-Umfang: a + b + c
+;;
+(defun geoRechtwinkligesDreieck-Flaeche (a b)   (* 0.5 (* a b)))  ; 90 Grad-Winkel
+(defun geoRechtwinkligesDreieck-Umfang  (a b c) (+ a b c))
+;;
+(defun geoPythagorasSatz (a b c) (+ (* a a) (* b b) (* c c)))
+;;
+(defun geoTrapez-Flaeche (b d h)   (* (* 0.5 h) (b + h)))
+(defun geoTrapez-Umfang  (a b c d) (+ a b c d))
+;;
+(defun geoRombus-Flaeche (a) (* 4 a))
+(defun geoRombus-Umfang  (d1 d2) (/ 2 (* d1 d2)))
+;;
+(defun geoKreis-Flaeche (r) (* (* r r) 3.14)  )
+(defun geoKreis-Umfang  (r) (* (* 2    3.14) r))
+
+;; ----------------------------------------------------------------------------
 ;; Rechenregeln:
+;;
+;; 1.  Regel                      Beispiel
+;; -----------------------------------------------------
+;;     a^m * a^n = a^(m + n)      2^5 * 2^3   = 2^8
+;;     a^m / a^n = a^(m - n)      5^7 / 5^3   = 5^4
+;;     (a^m)^n   = a^(m * n)      (10^3)^7    = 10^21
+;;     a^1       = a              17^1        = 17
+;;     a^0       = 1              34^0        = 1
+;;     (a/b)^m   = a^m / b^m      (5 / 6)^2   = 25 / 36
+;;     a^-m      = 1 / a^m        9^-2        = 1 / 81
+;;     a^(x/y)   = 4 sqrt(a^x)    49^(1/2)    = sqrt(49) = 7
+;;
+;; ----------------------------------------------------------------------------
 ;;
 ;; 1.  (a + b)^2 = (a^2 + b^2) * (a^2 + b^2)
 ;;
@@ -16,8 +56,52 @@
 ;;               = a^2 + b^2  + 2*ab
 ;;
 ;; => der 1. binomischen Formel
+;; ----------------------------------------------------------------------------
 ;;
+;;  1. (a + b)^2 = a^2 + b^2 + 2ab
+;;  2. (a - b)^2 = a^2 + b^2 - 2ab
 ;;
+;;  3. a^2 - b^2 = (a + b) * (a - b)
+;;
+;;  4. a^2 + b^2 = (a + b)^2 - 2ab    oder:
+;;     a^2 + b^2 = (a + b)^2 + 2ab
+;;
+;;  5. a^3 + b^3 = (a + b) * (a^2 - ab + b^2) = (a + b)^3 - 3ab * (a + b)
+;;  6. a^3 - b^3 = (a - b) * (a^2 + ab + b^2) = (a - b)^3 + 3ab * (a - b)
+;;
+;;  7. 2 * (a^2 + b^2) = (a + b)^2 + (a - b)^2
+;;
+;;  8. (a + b)^2 - (a - b)^2 = 4ab
+;;
+;;  9. a^4 + b^4 = (a + b) * (a - b) * [(a + b)^2 - 2ab]
+;;
+;; 10. (a - b)^2 = (a + b)^2 - 4ab
+;; 11. (a + b)^2 = (a - b)^2 + 4ab
+;;
+;; 12. a^4 + b^4 = [(a + b)^2 - 2ab]^2 - 2(ab)^2
+;;
+;; 13. (a + b + c)^2 = a^2 + b^2 + c^2 + 2ab + 2bc + 2ca
+;; 14. (a + b - c)^2 = a^2 + b^2 + c^2 + 2ab - 2bc - 2ca
+;; 15. (a - b - c)^2 = a^2 + b^2 + c^2 - 2ab + 2bc - 2ca
+;;
+;; 16. a^3 + b^3 + c^3 - 3abc = (a + b + c) * (a^2 + b^2 + c^2 - ab - bc - ca)
+;;
+;; 17. a^4 + a^2 * b^2 + b^4 = (a^2 + ab + b^2) * (a^2 - ab + b^2)
+;; ----------------------------------------------------------------------------
+;;
+;; pq-Formel:
+;;
+;;  1. ax^2 + bx + c                = 0                   | -c
+;;  2. ax^2 + bx                    = -c                  | dividiert: a
+;;  3.  x^2 + (bx/a)                = -(c/a)              | quadratische Ergänzung
+;;  4.  x^2 + (bx/a) + (b^2 / 4a^2) = -(c/a) + (b^2/4a^2) | wurzeln
+;;  5. (x + b/2a)^2                 = -(c/a) + (b^2/4a^2)
+;;  6. (x + b/2a)^2                 =  ((b^2 - 4ac) / 4a^2)
+;;  7. +- sqrt((x + b/2a)^2)        =     +- sqrt((b^2 - 4ac) / 4a^2)
+;;  8. x + (b/2a)                   =     +- sqrt((b^2 - 4ac) / 2a)
+;;  9. x                            =     +- sqrt( b^2 - 4ac) / 2a - (b/2a)
+;; 10. x                            = (-b +- sqrt( b^2 - 4ac) / 2a
+;; ----------------------------------------------------------------------------
 ;; 2. Addition von Brüchen: gleiche Nenner (die Zahl unter dem Bruchstrich)
 ;;    müssen gebildet werden (erweitern):
 ;
@@ -297,6 +381,41 @@
 (defun minuten2grad  (m) (return (* m       60)))
 (defun sekunden2grad (s) (return (* s (* 60 60))))
 
+;; ----------------------------------------------------------------------------
+;; RGB Farbwerte / Wellen-Länge ...
+;; ----------------------------------------------------------------------------
+(defclass RGBred   () ((value :initform (+ 255   0   0)) (waveLength :initform (cons 630 660))))
+(defclass RGBgreen () ((value :initform (+   0 255   0)) (waveLength :initform (cons 550 570))))
+(defclass RGByellow() ((value :initform (+ 255 255   0)) (waveLength :initform (cons 558 595))))
+(defclass RGBblue  () ((value :initform (+   0   0 255)) (waveLength :initform (cons 430 505))))
+(defclass RGBwhite () ((value :initform (+ 255 255 255)) (waveLength :initform (cons 450   0))))
+(defclass RGBviolet() ((value :initform (+ 255   0 255)) (waveLength :initform (cons 850 940))))
+;;
+(defclass turkis() ((value :initform (+   0 255 255))))
+(defclass black () ((value :initform (+   0   0   0))))
+
+
+;; ----------------------------------------------------------------------------
+;; misc tools ...
+;; ----------------------------------------------------------------------------
+;; round-to:  round a number to a specified decimal place;
+;;            The optional parameter "what" can be one of:
+;;            #'floor
+;;            #'ceil
+;;            #'truncate
+;; Beispiel:
+;;            ==> (round-to 1234.4567 0)
+;;            1234
+;;            ==> (round-to 1234.4567 1)
+;;            2469/2
+;;            ==> (float *)
+;;            1234.5
+;;            ==> (round-to -1234.4567 2 #'floor)
+;;            -61723/50
+;; ----------------------------------------------------------------------------
+(defun round-to (number precision &optional (what #'round))
+    (let ((div (expt 10 precision)))
+         (/ (funcall what (* number div)) div)))
 
 ;; ----------------------------------------------------------------------------
 ;; AI-Gruppen:
@@ -753,20 +872,171 @@
 ;;
 
 ;; ----------------------------------------------------------------------------
-;; Material für Widerstand ...
+;; Perioden-System: Gruppen ...
 ;; ----------------------------------------------------------------------------
-(defclass material ()
-          ((zeichen :initarg :zeichen)
-           (name    :initarg :name)))
+(defclass pegruppe ()
+          ((nummer :initarg :nummer)
+           (name   :initarg :name)))
 
-(defvar material-ag (make-instance 'material :zeichen "ag" :name "Gold"   ))
-(defvar material-cu (make-instance 'material :zeichen "cu" :name "Kupfer" ))
+(defvar pegruppe-1  (make-instance 'pegruppe :nummer  1 :name "Alkalimetalle"  ))
+(defvar pegruppe-2  (make-instance 'pegruppe :nummer  2 :name "Edelgase"       ))
+(defvar pegruppe-11 (make-instance 'pegruppe :nummer 11 :name "Kupfergruppe"   ))
+(defvar pegruppe-13 (make-instance 'pegruppe :nummer 13 :name "Erdmetalle"     ))
+(defvar pegruppe 14 (make-instance 'pegruppe :nummer 14 :name "Kohlenstoff"    ))
+(defvar pegruppe 15 (make-instance 'pegruppe :nummer 15 :name "Stickstoffgase" ))
+(defvar pegruppe-16 (make-instance 'pegruppe :nummer 16 :name "Chalkogene"     ))
+
+;; ----------------------------------------------------------------------------
+;; Perioden-System der Elemente ...
+;; ----------------------------------------------------------------------------
+(defclass pelement ()
+          ((zeichen :initarg :zeichen)
+           (name    :initarg :name)
+           (ordzahl :initarg :ordzahl)
+           (gruppe  :initarg :gruppe)))
+
+(defvar pelement-h  (make-instance 'pelement :zeichen "H"  :name "Wasserstoff" :ordzahl  1 :gruppe 'pegruppe-1  ))
+(defvar pelement-he (make-instance 'pelement :zeichen "He" :name "Helium"      :ordzahl  2 :gruppe 'pegruppe-2  ))
+(defvar pelement-li (make-instance 'pelement :zeichen "Li" :name "Lithum"      :ordzahl  3 :gruppe 'pegruppe-1  ))
+(defvar pelement-be (make-instance 'pelement :zeichen "Be" :name "Beryllium"   :ordzahl  4 :gruppe 'pegruppe-2  ))
+(defvar pelement-b  (make-instance 'pelement :zeichen "B"  :name "Bor"         :ordzahl  5 :gruppe 'pegruppe-13 ))
+(defvar pelement-c  (make-instance 'pelement :zeichen "C"  :name "Kohlenstoff" :ordzahl  6 :gruppe 'pegruppe-14 ))
+(defvar pelement-n  (make-instance 'pelement :zeichen "N"  :name "Stickstoff"  :ordzahl  7 :gruppe 'pegruppe-15 ))
+(defvar pelement-o  (make-instance 'pelement :zeichen "O"  :name "Sauerstoff"  :ordzahl  8 :gruppe 'pegruppe-16 ))
+
+(defvar pelement-au (make-instance 'pelement :zeichen "Au" :name "Gold"        :ordzahl 79 :gruppe 'pegruppe-11 ))
+(defvar pelement-ag (make-instance 'pelement :zeichen "Ag" :name "Silber"      :ordzahl 47 :gruppe 'pegruppe-11 ))
+(defvar pelement-cu (make-instance 'pelement :zeichen "Cu" :name "Kupfer"      :ordzahl 29 :gruppe 'pegruppe-11 ))
+
+;; ----------------------------------------------------
+;; Bauteil-Eigenschaften ...
+;; ----------------------------------------------------
+;(defclass bauteil ()
+;          ((name :initarg :name)))
+
+;; ---------------------------------------------------------------------
+;; Der Widerstandswert elektrischer Widerstände wird in Ohm angegeben.
+;; Die meisten Widerstände haben Farbringe, mit deren Hilfe sich
+;; Widerstandswert und Toleranz ermitteln lassen.
+;; Bei Widerständen mit insgesamt vier Farbringen dienen die ersten
+;; drei Farbringe zum Feststellen des Widerstandswertes, die Farbe des
+;; viertes Ringes gibt den Toleranzwert an.
+;;
+;; Beispiel:
+;;   1. Ring 4 - gelb    = 4
+;;   2. Ring 7 - violett = 7
+;;   3. Ring 3 -         = 1000  = 47.000 Ohm = 47 Kilo-Ohm
+;;   4. Ring     rot     = +-2%  = Toleranz
+;; ---------------------------------------------------------------------
+(defclass *RTafel* ()
+          ((farbe :initarg :farbe)
+           (ring1 :initarg :ring1)
+           (ring2 :initarg :ring2)
+           (ring3 :initarg :ring3)    ; Anzahl der Nullen
+           (ring4 :initarg :ring4)))  ; Toleranz
+;;
+(defvar *RTafel-schwarz* (make-instance '*RTafel* :farbe "schwarz" :ring1 0 :ring2 0 :ring3 0        :ring4  0.00 ))
+(defvar *RTafel-braun*   (make-instance '*RTafel* :farbe "braun"   :ring1 1 :ring2 1 :ring3 10       :ring4  1.00 ))
+(defvar *RTafel-rot*     (make-instance '*RTafel* :farbe "rot"     :ring1 2 :ring2 2 :ring3 100      :ring4  2.00 ))
+(defvar *RTafel-orange*  (make-instance '*RTafel* :farbe "orange"  :ring1 3 :ring2 3 :ring3 1000     :ring4  0.00 ))
+(defvar *RTafel-gelb*    (make-instance '*RTafel* :farbe "gelb"    :ring1 4 :ring2 4 :ring3 10000    :ring4  0.00 ))
+(defvar *RTafel-gruen*   (make-instance '*RTafel* :farbe "gruen"   :ring1 5 :ring2 5 :ring3 100000   :ring4  0.50 ))
+(defvar *RTafel-blau*    (make-instance '*RTafel* :farbe "blau"    :ring1 6 :ring2 6 :ring3 1000000  :ring4  0.25 ))
+(defvar *RTafel-violett* (make-instance '*RTafel* :farbe "violett" :ring1 7 :ring2 7 :ring3 10000000 :ring4  0.10 ))
+(defvar *RTafel-grau*    (make-instance '*RTafel* :farbe "grau"    :ring1 8 :ring2 8 :ring3 0        :ring4  0.00 ))
+(defvar *RTafel-weis*    (make-instance '*RTafel* :farbe "weis"    :ring1 9 :ring2 9 :ring3 0        :ring4  0.00 ))
+(defvar *RTafel-gold*    (make-instance '*RTafel* :farbe "gold"    :ring1 0 :ring2 0 :ring3 0.1      :ring4  5.00 ))
+(defvar *RTafel-silber*  (make-instance '*RTafel* :farbe "silber"  :ring1 0 :ring2 0 :ring3 0.01     :ring4 10.00 ))
+
+;; --------------------------------------------------------------------------------
+;; Widerstandsreihen: E3, E6, E12, E24, E48, E96, E192 ...
+;; Faktor k: für Verlustwiderstand
+;;                      ___
+;;                   x /   '
+;; Grundformel:  k =  v 10       x entspricht: E3 | E6 | ...
+;; Beispiel:
+;;            ___
+;;         6 /   '
+;;    k =   v 10
+;; --------------------------------------------------------------------------------
+(defvar *RReiheE3*   2.1544)
+(defvar *RReiheE6*   1.4677)
+(defvar *RReiheE12*  1.2115)
+(defvar *RReiheE24*  1.1006)
+(defvar *RReiheE48*  1.0491)
+(defvar *RReiheE96*  1.0242)
+(defvar *RReiheE192* 1.0120)
+;;
+(defvar *RReiheE3Const0*   1.0 ) ; 1 Ohm
+(defvar *RReiheE6Const0*   1.0 )
+;;
+(defvar *RReiheE12Const0*  1.0 )
+(defvar *RReiheE24Const0*  1.0 )
+;;
+(defvar *RReiheE48Const0*  1.0 )
+(defvar *RReiheE96Const0*  1.0 )
+;;
+(defvar *RReiheE192Const0* 1.0 )
+;;
+(defvar *RReiheE3Const1* (round-to (* 2.1544 1.0             ) 2))  ; 2.1544
+(defvar *RReiheE3Const2* (round-to (* 2.1544 *RReiheE3Const1*) 2))  ; 4.6416
+(defvar *RReiheE3Const3* (round-to (* 2.1544 *RReiheE3Const2*) 2))  ;
+(defvar *RReiheE3Const4* (round-to (* 2.1544 *RReiheE3Const3*) 2))  ;
+(defvar *RReiheE3Const5* (round-to (* 2.1544 *RReiheE3Const4*) 2))  ;
+;;
+(defvar *RReiheE6Const1* (round-to (* 1.4677 1.0             ) 2))  ; 1.4667
+(defvar *RReiheE6Const2* (round-to (* 1.4677 *RReiheE6Const1*) 2))  ; 2.1541
+(defvar *RReiheE6Const3* (round-to (* 1.4677 *RReiheE6Const2*) 2))  ; 3.1615
+(defvar *RReiheE6Const4* (round-to (* 1.4677 *RReiheE6Const3*) 2))  ; 4.6401
+(defvar *RReiheE6Const5* (round-to (* 1.4677 *RReiheE6Const4*) 2))  ; 6.8100
+;;
+(defvar *RReiheE12Const1* (round-to (* 1.2115 1.0              ) 2))  ; 1.2115
+(defvar *RReiheE12Const2* (round-to (* 1.2115 *RReiheE12Const1*) 2))  ;
+(defvar *RReiheE12Const3* (round-to (* 1.2115 *RReiheE12Const2*) 2))  ;
+(defvar *RReiheE12Const4* (round-to (* 1.2115 *RReiheE12Const3*) 2))  ;
+(defvar *RReiheE12Const5* (round-to (* 1.2115 *RReiheE12Const4*) 2))  ;
+;;
+(defvar *RReiheE24Const1* (round-to (* 1.1006 1.0              ) 2))  ; 1.1006
+(defvar *RReiheE24Const2* (round-to (* 1.1006 *RReiheE24Const1*) 2))  ;
+(defvar *RReiheE24Const3* (round-to (* 1.1006 *RReiheE24Const2*) 2))  ;
+(defvar *RReiheE24Const4* (round-to (* 1.1006 *RReiheE24Const3*) 2))  ;
+(defvar *RReiheE24Const5* (round-to (* 1.1006 *RReiheE24Const4*) 2))  ;
+;;
+(defvar *RReiheE48Const1* (round-to (* 1.0491 1.0              ) 2))  ; 1.0491
+(defvar *RReiheE48Const2* (round-to (* 1.0491 *RReiheE48Const1*) 2))  ;
+(defvar *RReiheE48Const3* (round-to (* 1.0491 *RReiheE48Const2*) 2))  ;
+(defvar *RReiheE48Const4* (round-to (* 1.0491 *RReiheE48Const3*) 2))  ;
+(defvar *RReiheE48Const5* (round-to (* 1.0491 *RReiheE48Const4*) 2))  ;
+;;
+(defvar *RReiheE96Const1* (round-to (* 1.0242 1.0              ) 2))  ; 1.0242
+(defvar *RReiheE96Const2* (round-to (* 1.0242 *RReiheE96Const1*) 2))  ;
+(defvar *RReiheE96Const3* (round-to (* 1.0242 *RReiheE96Const2*) 2))  ;
+(defvar *RReiheE96Const4* (round-to (* 1.0242 *RReiheE96Const3*) 2))  ;
+(defvar *RReiheE96Const5* (round-to (* 1.0242 *RReiheE96Const4*) 2))  ;
+;;
+(defvar *RReiheE192Const1* (round-to (* 1.0120 1.0               ) 2))  ; 1.0120
+(defvar *RReiheE192Const2* (round-to (* 1.0120 *RReiheE192Const1*) 2))  ;
+(defvar *RReiheE192Const3* (round-to (* 1.0120 *RReiheE192Const2*) 2))  ;
+(defvar *RReiheE192Const4* (round-to (* 1.0120 *RReiheE192Const3*) 2))  ;
+(defvar *RReiheE192Const5* (round-to (* 1.0120 *RReiheE192Const4*) 2))  ;
+
+
+;; --------------------------------------------------------------------------------
+;; Der Kondensator kann elektrische Energie speichern.
+;; In seiner einfachsten Form besteht der aus zwei Elektroden, die
+;; durch einen Isolator elektrisch voneinander getrennt sind.
+;; Beim Anlegen einer elektrischen Spannung werden diese Platten
+;; aufgeladen und speichern die Energie auch beim Entnehmen der Spannungszufuhr.
+;; Jeder Kondensator besitzt eine bestimmte mögliche Ladungsmenge an elektrischer
+;; Energie. Diese wird auch als Kapazität bezeichnet. Die Kapazität wird in
+;; Farad angegeben.
+;; --------------------------------------------------------------------------------
 
 ;; ----------------------------------------------------
 ;; each port side, can plugged with other material ...
 ;; ----------------------------------------------------
-(defclass plus  (material) ((plug :initarg :plug)))  ;; plugged / verbunden?
-(defclass minus (material) ((plug :initarg :plug)))  ;; plugged / verbunden?
+(defclass plus  () ((plug :initarg :plug)))  ;; plugged / verbunden?
+(defclass minus () ((plug :initarg :plug)))  ;; plugged / verbunden?
 
 ;; ------------------------------------
 ;; Eingänge:
@@ -781,11 +1051,11 @@
 ;; ------------------------------------
 ;; power vendors ...
 ;; ------------------------------------
-(defclass powerVendor (ports)
+(defclass powerVendor ()
 	  ((name     :initarg :name)
-           (size     :initarg :size)
-           (voltage  :initarg :voltage)
-           (capacity :initarg :capacity)))
+       (size     :initarg :size)
+       (voltage  :initarg :voltage)
+       (capacity :initarg :capacity)))
 
 (defvar powerDuraCell-AAA (make-instance 'powerVendor :name "DuraCell" :size "AAA" :voltage 1.5 :capacity "1450 mAH"))
 (defvar powerDuraCell-AA  (make-instance 'powerVendor :name "DuraCell" :size "AA"  :voltage 1.5 :capacity "3500 mAH"))
@@ -798,21 +1068,10 @@
 (defclass battery (power)
           ((vendor :initarg :vendor :accessor battery-type)))
 
-(defclass red   () ((value :initform (+ 255   0   0)) (waveLength :initform (cons 630 660))))
-(defclass green () ((value :initform (+   0 255   0)) (waveLength :initform (cons 550 570))))
-(defclass yellow() ((value :initform (+ 255 255   0)) (waveLength :initform (cons 558 595))))
-(defclass blue  () ((value :initform (+   0   0 255)) (waveLength :initform (cons 430 505))))
-(defclass white () ((value :initform (+ 255 255 255)) (waveLength :initform (cons 450   0))))
-(defclass violet() ((value :initform (+ 255   0 255)) (waveLength :initform (cons 850 940))))
-;;
-(defclass turkis() ((value :initform (+   0 255 255))))
-(defclass black () ((value :initform (+   0   0   0))))
 ;;
 (defclass diode () ())
 (defclass led (diode)
           ((color :initarg :color)))
-
-
 
 ;; ----------------------------
 ;; deutsche Frage-Woerter ...
@@ -843,7 +1102,7 @@
 (defun defsymbol (&rest args)
   (intern (format nil "~{~a~^-~}" (mapcar #'string args))))
 
-(setq cnt 0 0)
+(setq cnt 0)
 ;(loop
     (princ "Eingabe: ")
     (setq str (string-to-list(read-line)))
@@ -857,10 +1116,12 @@
             :in  deFrageWoerterCollection
             :do (progn
                 (setq fragwort (deutschesFrageWort-wort currentFrageWort))
-                (
                 (print fragwort)
             )
         )
 
 ;    (when (> cnt 5) (return))
 ;)
+
+(print (geoRechteck-Flaeche 10 5))
+(exit)
