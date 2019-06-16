@@ -890,10 +890,12 @@
 ;; Perioden-System der Elemente ...
 ;; ----------------------------------------------------------------------------
 (defclass pelement ()
-          ((zeichen :initarg :zeichen)
-           (name    :initarg :name)
-           (ordzahl :initarg :ordzahl)
-           (gruppe  :initarg :gruppe)))
+          ((zeichen :initarg :zeichen)      ; Element Kurzzeichen
+           (name    :initarg :name)         ; Name des Elements
+           (ordzahl :initarg :ordzahl)      ; Ordnungszahl
+           (gruppe  :initarg :gruppe)       ; Gruppe
+           (eleit   :initarg :eleit)        ; Elektrische Leitfähigkeit (kappa)
+           (spwider :initarg :spwider)))    ; Spezifischer Widerstand (p = roh) => Ohm * mm^2/m
 
 (defvar pelement-h  (make-instance 'pelement :zeichen "H"  :name "Wasserstoff" :ordzahl  1 :gruppe 'pegruppe-1  ))
 (defvar pelement-he (make-instance 'pelement :zeichen "He" :name "Helium"      :ordzahl  2 :gruppe 'pegruppe-2  ))
@@ -904,9 +906,9 @@
 (defvar pelement-n  (make-instance 'pelement :zeichen "N"  :name "Stickstoff"  :ordzahl  7 :gruppe 'pegruppe-15 ))
 (defvar pelement-o  (make-instance 'pelement :zeichen "O"  :name "Sauerstoff"  :ordzahl  8 :gruppe 'pegruppe-16 ))
 
-(defvar pelement-au (make-instance 'pelement :zeichen "Au" :name "Gold"        :ordzahl 79 :gruppe 'pegruppe-11 ))
-(defvar pelement-ag (make-instance 'pelement :zeichen "Ag" :name "Silber"      :ordzahl 47 :gruppe 'pegruppe-11 ))
-(defvar pelement-cu (make-instance 'pelement :zeichen "Cu" :name "Kupfer"      :ordzahl 29 :gruppe 'pegruppe-11 ))
+(defvar pelement-ag (make-instance 'pelement :zeichen "Ag" :name "Silber"      :ordzahl 47 :gruppe 'pegruppe-11 :eleit 62 :spwider 0.0161 ))
+(defvar pelement-cu (make-instance 'pelement :zeichen "Cu" :name "Kupfer"      :ordzahl 29 :gruppe 'pegruppe-11 :eleit 58 :spwider 0.0172 ))
+(defvar pelement-au (make-instance 'pelement :zeichen "Au" :name "Gold"        :ordzahl 79 :gruppe 'pegruppe-11 :eleit 41 :spwider 0.0244 ))
 
 ;; ---------------------------------------------------------------------
 ;; Der Widerstandswert elektrischer Widerstände wird in Ohm angegeben.
@@ -1087,16 +1089,94 @@
 (defclass plus  () ((plug :initarg :plug)))  ;; plugged / verbunden?
 (defclass minus () ((plug :initarg :plug)))  ;; plugged / verbunden?
 
-;; ------------------------------------
+;; ----------------------------------------------------------------------------
 ;; Eingänge:
 ;; pot := 0 Strom liegt NICHT an ...
 ;; pot := 1 Strom liegt an
-;; ------------------------------------
-(defclass ground () ())
-(defclass ports (plus minus)
-          ((pot_p :initarg :pot_p)
-           (pot_m :initarg :pot_m)))
+;; ----------------------------------------------------------------------------
+;; a1 = Anfang Low
+;; e1 = Ende   Low
+;;
+;; a2 = Anfang High
+;; e2 = Ende   High
+;;
+;; ----------------------------------------------------------------------------
+(defun ports-2 (a1 e1  a2 e2)
+    (setq r1  0)
+    (setq r2  0)
+    (if (= a1 0) (if (= e1 0) (setq r1 0)))
+    (if (= a1 0) (if (= e1 1) (setq r1 0)))
+    (if (= a1 1) (if (= e1 0) (setq r1 0)))
+    (if (= a1 1) (if (= e1 1) (setq r1 1)))
+    ;;
+    (if (= a2 0) (if (= e2 0) (setq r2 0)))
+    (if (= a2 0) (if (= e2 1) (setq r2 0)))
+    (if (= a2 1) (if (= e2 0) (setq r2 0)))
+    (if (= a2 1) (if (= e2 1) (setq r2 1)))
+    ;;
+    (if (= r1 0) (if (= r2 0) (return-from ports-2 0)))
+    (if (= r1 0) (if (= r2 1) (return-from ports-2 0)))
+    (if (= r1 1) (if (= r2 0) (return-from ports-2 0)))
+    (if (= r1 1) (if (= r2 1) (return-from ports-2 1)))
+)
 
+;; ----------------------------------------------------------------------------
+;; Draht:
+;;
+;; R = Roh * (L/A)
+;;
+;; Roh = Spezifischer Widerstand des Leiter-Materials (z.B. Kupfer)
+;; R   = Widerstand
+;; L   = Länge des Leiters in Meter
+;; A   = Kabel-Querschnitt in Quadratmetern
+;;
+;; Handelsübliche Kabelquerschnitte:
+;;  0,75 mm^2,
+;;  1,50 mm^2,
+;;  2,50 mm^2,
+;;  4,00 mm^2,
+;;  6,00 mm^2,
+;; 10,00 mm^2,
+;; 16,00 mm^2
+;;
+;; Berechnung Querschnitt A aus Durchmesser d = 2 * r: (Runder Kabelquerschnitt
+;; aus Leitungsdurchmesser):
+;;
+;; r = Radius   = Drahtradius
+;; d = 2*r      = Drahtdurchmesser
+;;
+;; A = r^2 * pi = ((d^2 * pi) / 4) * d^2
+;;
+;; Berechnung Durchmesser d = 2*r aus Querschnitt A: (Kabeldurchmesser aus
+;; rundem Leitungsquerschnitt):
+;;
+;; d = 2 * sqrt(A/pi) = 2r * sqrt(A)
+;;
+;; Spannungsabfall: delta U
+;;
+;; delta U = I * R = I * (2 * (l / (k * A)))
+;;
+;; I = Stromstärke
+;; l = Leitungslänge in Meter (mal 2, weil es einen Hin- und einen Rückleiter
+;; k = kappa, elektrische Leitfähigkeit (Leitwert) von Kupfer (Cu) = 58 S*m/mm^2
+;; S = (Simens bei 1 m Länge und 1 mm^2 Leiterflöche) = k = 1/p
+;; p = roh = Spezifischer Widerstand Ohm * m
+;; A = Leiter-Querschnitts-Fläche in mm^2
+;; R = Widerstand
+;;
+;;
+;; Größe des Widerstands:
+;;
+;; R = p * (l/A)
+;;
+;; ----------------------------------------------------------------------------
+(defclass draht ()
+          ((material :initarg :material)
+           (roh      :initarg :roh)
+           (laenge   :initarg :laenge)
+           (schnitt  :initarg :schnitt)))
+;;
+(defvar 
 ;; ------------------------------------
 ;; power vendors ...
 ;; ------------------------------------
@@ -1104,24 +1184,27 @@
 	  ((name     :initarg :name)
        (size     :initarg :size)
        (voltage  :initarg :voltage)
-       (capacity :initarg :capacity)))
+       (capacity :initarg :capacity)
+       (munit    :initarg :munit)
+       (port
+))
 
-(defvar powerDuraCell-AAA (make-instance 'powerVendor :name "DuraCell" :size "AAA" :voltage 1.5 :capacity "1450 mAH"))
-(defvar powerDuraCell-AA  (make-instance 'powerVendor :name "DuraCell" :size "AA"  :voltage 1.5 :capacity "3500 mAH"))
-(defvar powerDuraCell-C   (make-instance 'powerVendor :name "DuraCell" :size "C"   :voltage 1.5 :capacity "8000 mAh"))
-(defvar powerDuraCell-D   (make-instance 'powerVendor :name "DuraCell" :size "D"   :voltage 1.5 :capacity "207000 mAh"))
-(defvar powerDuraCell-9V  (make-instance 'powerVendor :name "DuraCell" :size "9V"  :voltage 9.0 :capacity "1200 mAH"))
+(defvar powerDuraCell-AAA (make-instance 'powerVendor :name "DuraCell" :size "AAA" :voltage 1.5 :capacity 1450   :munit "mAh"))
+(defvar powerDuraCell-AA  (make-instance 'powerVendor :name "DuraCell" :size "AA"  :voltage 1.5 :capacity 3500   :munit "mAh"))
+(defvar powerDuraCell-C   (make-instance 'powerVendor :name "DuraCell" :size "C"   :voltage 1.5 :capacity 8000   :munit "mAh"))
+(defvar powerDuraCell-D   (make-instance 'powerVendor :name "DuraCell" :size "D"   :voltage 1.5 :capacity 207000 :munit "mAh"))
+(defvar powerDuraCell-9V  (make-instance 'powerVendor :name "DuraCell" :size "9V"  :voltage 9.0 :capacity 1200   :munit "mAh"))
 
-(defclass power (powerVendors)
-          ((capacity :initarg :capacity)))
-(defclass battery (power)
-          ((vendor :initarg :vendor :accessor battery-type)))
+
 
 ;;
 (defclass diode () ())
 (defclass led (diode)
           ((color :initarg :color)))
 
+;; ----------------------------------------------------------------------------
+;; D I G I T A L  -  Elektronik
+;;
 ;; ----------------------------------------------------------------------------
 ;; AND - Gate ...
 ;;
@@ -1264,15 +1347,24 @@
 ;;    Uc A3 B3 C3 A4 B4 C4
 ;; 14 O__O__O__O__O__O__O___  8
 ;;   |   |  |  |  |  |  |   |
-;;   |   +ANDo-+  +ANDo-+   |
+;;   |   NANDo-+  NANDo-+   |
 ;;   |                      |
-;;   )   +ANDo-+  +ANDo-+   (
+;;   )   NANDo-+  NANDo-+   (
 ;;   |   |  |  |  |  |  |   |
 ;;   |___|__|__|__|__|__|___|
 ;;  1    O  O  O  O  O  O   O 7
 ;;       A1 B1 C1 A2 B2 C2  GND
 ;; ----------------------------------------------------------------------------
-;(defun TTL-7400 (a1 b1 c1  a2 b2 c2  a3 b3 c3  a4 b4 c4  GND Uc)
+(defun TTL-7400 (a1 b1 c1  a2 b2 c2  a3 b3 c3  a4 b4 c4  GND Uc)
+    (setq c1 0) (setq c2 0)
+    (setq c3 0) (setq c4 0)
+    ;
+    (setq c1 (gate-nand a1 b1)) (return-from TTL-7400 c1)
+    (setq c2 (gate-nand a2 b2)) (return-from TTL-7400 c2)
+    ;
+    (setq c3 (gate-nand a3 b3)) (return-from TTL-7400 c3)
+    (setq c4 (gate-nand a4 b4)) (return-from TTL-7400 c4)
+)
 
 ;; ----------------------------
 ;; deutsche Frage-Woerter ...
